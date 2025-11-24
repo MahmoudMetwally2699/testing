@@ -81,23 +81,48 @@ const HotelPage = () => {
     if (!hotel) return <div>Hotel not found</div>;
 
     return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold">{hotel.name}</h1>
-            <p>{hotel.address}</p>
-            <div className="my-4">
-                <h2 className="text-xl font-semibold">Available Rates</h2>
-                {loading ? <p>Loading rates...</p> : (
-                    <div className="grid gap-4">
+        <div className="hotel-page">
+            <div className="hotel-header">
+                <h1 className="hotel-title">{hotel.name}</h1>
+                <p className="hotel-address">{hotel.address}</p>
+            </div>
+
+            <section className="rates-section">
+                <div className="section-header">
+                    <h2 className="section-title">Available Rates</h2>
+                    <span className="rates-count">{rates.length} rates found</span>
+                </div>
+
+                {loading ? (
+                    <div className="loading-container">
+                        <div className="spinner-large"></div>
+                        <p className="loading-text">Loading rates...</p>
+                    </div>
+                ) : (
+                    <div className="rates-grid">
                         {rates.map((rate, index) => (
-                            <div key={index} className="border p-4 rounded shadow">
-                                <p className="font-bold">{rate.room_name}</p>
-                                <p>Meal: {rate.meal}</p>
-                                <p className="text-lg text-green-600">
-                                    {rate.payment_options.payment_types[0].show_amount} {rate.payment_options.payment_types[0].show_currency_code}
-                                </p>
+                            <div key={index} className="rate-card glass-card">
+                                <div className="room-name">{rate.room_name}</div>
+                                <div className="rate-details">
+                                    <div className="detail-row">
+                                        <span className="detail-icon">🍽️</span>
+                                        <span className="meal-badge">{rate.meal}</span>
+                                    </div>
+                                    <div className="detail-row">
+                                        <span className="detail-icon">💳</span>
+                                        <span>{rate.payment_options.payment_types[0].show_amount} {rate.payment_options.payment_types[0].show_currency_code}</span>
+                                    </div>
+                                </div>
+                                <div className="price-section">
+                                    <div className="price-label">Price</div>
+                                    <div className="price-amount">
+                                        <span className="currency">{rate.payment_options.payment_types[0].show_currency_code}</span>
+                                        <span>{rate.payment_options.payment_types[0].show_amount}</span>
+                                    </div>
+                                </div>
                                 <button
                                     onClick={() => handleBook(rate)}
-                                    className="bg-green-500 text-white px-4 py-2 rounded mt-2"
+                                    className="btn-book"
                                 >
                                     Book Now
                                 </button>
@@ -105,7 +130,7 @@ const HotelPage = () => {
                         ))}
                     </div>
                 )}
-            </div>
+            </section>
         </div>
     );
 };

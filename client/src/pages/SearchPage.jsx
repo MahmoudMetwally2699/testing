@@ -1,195 +1,245 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { searchHotels, seedTestHotel } from '../api';
+import { searchHotels } from '../api';
+import './SearchPage.css';
 
 const SearchPage = () => {
     const navigate = useNavigate();
-    const [loading, setLoading] = useState(false);
-    const [checkin, setCheckin] = useState('2025-12-01');
-    const [checkout, setCheckout] = useState('2025-12-05');
-
-    // Default to 1 room with 2 adults
-    const [guests, setGuests] = useState([{ adults: 2, children: [] }]);
-    const [residency, setResidency] = useState('us');
-
-    const [searchType, setSearchType] = useState('test'); // 'test' or 'region'
+    const [searchType, setSearchType] = useState('test');
     const [regionId, setRegionId] = useState('');
+    const [checkin, setCheckin] = useState('');
+    const [checkout, setCheckout] = useState('');
+    const [residency, setResidency] = useState('us');
+    const [rooms, setRooms] = useState([{ adults: 2, children: [] }]);
+    const [loading, setLoading] = useState(false);
 
-    const addRoom = () => {
-        setGuests([...guests, { adults: 2, children: [] }]);
-    };
-
-    const removeRoom = (index) => {
-        const newGuests = guests.filter((_, i) => i !== index);
-        setGuests(newGuests);
-    };
-
-    const updateAdults = (index, value) => {
-        const newGuests = [...guests];
-        newGuests[index].adults = parseInt(value);
-        setGuests(newGuests);
-    };
-
-    const addChild = (index) => {
-        const newGuests = [...guests];
-        newGuests[index].children.push(10); // Default age 10
-        setGuests(newGuests);
-    };
-
-    const removeChild = (roomIndex, childIndex) => {
-        const newGuests = [...guests];
-        newGuests[roomIndex].children = newGuests[roomIndex].children.filter((_, i) => i !== childIndex);
-        setGuests(newGuests);
-    };
-
-    const updateChildAge = (roomIndex, childIndex, value) => {
-        const newGuests = [...guests];
-        newGuests[roomIndex].children[childIndex] = parseInt(value);
-        setGuests(newGuests);
-    };
-
-    const handleSearch = async () => {
+    const handleSearch = async (e) => {
+        e.preventDefault();
         setLoading(true);
-        try {
-            let params = {
-                checkin,
-                checkout,
-                guests,
-                residency
-            };
 
+        try {
+            const guests = rooms.map(room => ({
+                adults: room.adults,
+                children: room.children
+            }));
+
+            let searchParams;
             if (searchType === 'test') {
-                await seedTestHotel();
-                params.ids = ['test_hotel_do_not_book'];
+                searchParams = {
+                    ids: ['test_hotel_do_not_book'],
+                    checkin,
+                    checkout,
+                    guests,
+                    residency
+                };
             } else {
-                if (!regionId) {
-                    alert('Please enter a Region ID');
-                    setLoading(false);
-                    return;
-                }
-                params.regionId = parseInt(regionId);
+                searchParams = {
+                    regionId: parseInt(regionId),
+                    checkin,
+                    checkout,
+                    guests,
+                    residency
+                };
             }
 
-            const response = await searchHotels(params);
+            const response = await searchHotels(searchParams);
 
             if (response.data && response.data.hotels && response.data.hotels.length > 0) {
                 const hotel = response.data.hotels[0];
-                navigate(`/hotel/${hotel.id}`, { state: { searchParams: params, hotelData: hotel } });
+                navigate(`/hotel/${hotel.id}`, {
+                    state: {
+                        searchParams,
+                        hotelData: hotel
+                    }
+                });
             } else {
                 alert('No hotels found');
             }
         } catch (error) {
             console.error(error);
-            alert('Error searching hotels: ' + (error.response?.data?.error || error.message));
+            alert('Error searching hotels');
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="p-4 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4">Hotel Search</h1>
+    const addRoom = () => {
+        setRooms([...rooms, { adults: 2, children: [] }]);
+    };
 
-            <div className="mb-4 flex gap-4">
-                <button
-                    className={`px-4 py-2 rounded ${searchType === 'test' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSearchType('test')}
-                >
-                    Test Hotel
-                </button>
-                <button
-                    className={`px-4 py-2 rounded ${searchType === 'region' ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => setSearchType('region')}
-                >
-                    Region Search
-                </button>
+    const removeRoom = (index) => {
+        if (rooms.length > 1) {
+            setRooms(rooms.filter((_, i) => i !== index));
+        }
+    };
+
+    const updateRoom = (index, field, value) => {
+        const newRooms = [...rooms];
+        newRooms[index][field] = parseInt(value);
+        setRooms(newRooms);
+    };
+
+    return (
+        <div className="search-page">
+            <div className="search-hero">
+                <div className="hero-content fade-in">
+                    <h1 className="hero-title">
+                        <span className="gradient-text">Discover</span> Your Perfect Stay
+                    </h1>
+                    <p className="hero-subtitle">
+                        Book luxury hotels worldwide with our ETG API v3 integration
+                    </p>
+                </div>
             </div>
 
-            <div className="space-y-4 bg-white p-6 rounded shadow">
-                {searchType === 'region' && (
-                    <div>
-                        <label className="block font-semibold mb-1">Region ID:</label>
-                        <input
-                            type="number"
-                            value={regionId}
-                            onChange={e => setRegionId(e.target.value)}
-                            className="border p-2 w-full rounded"
-                            placeholder="e.g. 965849721"
-                        />
+            <div className="container">
+                <div className="search-card glass-card">
+                    <div className="search-tabs">
+                        <button
+                            className={`tab-btn ${searchType === 'test' ? 'active' : ''}`}
+                            onClick={() => setSearchType('test')}
+                        >
+                            <span className="tab-icon">🏨</span>
+                            Test Hotel
+                        </button>
+                        <button
+                            className={`tab-btn ${searchType === 'region' ? 'active' : ''}`}
+                            onClick={() => setSearchType('region')}
+                        >
+                            <span className="tab-icon">🌍</span>
+                            Region Search
+                        </button>
                     </div>
-                )}
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block font-semibold mb-1">Check-in:</label>
-                        <input type="date" value={checkin} onChange={e => setCheckin(e.target.value)} className="border p-2 w-full rounded" />
-                    </div>
-                    <div>
-                        <label className="block font-semibold mb-1">Check-out:</label>
-                        <input type="date" value={checkout} onChange={e => setCheckout(e.target.value)} className="border p-2 w-full rounded" />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block font-semibold mb-1">Residency (Country Code):</label>
-                    <input type="text" value={residency} onChange={e => setResidency(e.target.value)} className="border p-2 w-full rounded" placeholder="e.g. us, gb, de" />
-                </div>
-
-                <div className="border-t pt-4">
-                    <h3 className="font-bold mb-2">Rooms & Guests</h3>
-                    {guests.map((room, index) => (
-                        <div key={index} className="mb-4 p-4 border rounded bg-gray-50 relative">
-                            <h4 className="font-semibold mb-2">Room {index + 1}</h4>
-                            {guests.length > 1 && (
-                                <button onClick={() => removeRoom(index)} className="absolute top-2 right-2 text-red-500 text-sm">Remove Room</button>
-                            )}
-                            <div className="flex gap-4 items-center mb-2">
-                                <div>
-                                    <label className="block text-sm">Adults</label>
-                                    <input
-                                        type="number"
-                                        min="1"
-                                        max="6"
-                                        value={room.adults}
-                                        onChange={e => updateAdults(index, e.target.value)}
-                                        className="border p-1 w-16 rounded"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-sm">Children</label>
-                                    <button onClick={() => addChild(index)} className="text-blue-600 text-sm">+ Add Child</button>
-                                </div>
+                    <form onSubmit={handleSearch} className="search-form">
+                        {searchType === 'region' && (
+                            <div className="input-group slide-in">
+                                <label className="input-label">Region ID</label>
+                                <input
+                                    type="number"
+                                    className="input-field"
+                                    value={regionId}
+                                    onChange={(e) => setRegionId(e.target.value)}
+                                    placeholder="Enter region ID (e.g., 6176)"
+                                    required
+                                />
                             </div>
-                            {room.children.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mt-2">
-                                    {room.children.map((age, childIndex) => (
-                                        <div key={childIndex} className="flex items-center gap-1 bg-white border p-1 rounded">
-                                            <span className="text-xs">Age:</span>
-                                            <input
-                                                type="number"
-                                                min="0"
-                                                max="17"
-                                                value={age}
-                                                onChange={e => updateChildAge(index, childIndex, e.target.value)}
-                                                className="border p-1 w-12 text-sm rounded"
-                                            />
-                                            <button onClick={() => removeChild(index, childIndex)} className="text-red-500 ml-1">×</button>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    ))}
-                    <button onClick={addRoom} className="text-blue-600 font-semibold">+ Add Another Room</button>
-                </div>
+                        )}
 
-                <button
-                    onClick={handleSearch}
-                    disabled={loading}
-                    className="w-full bg-green-600 text-white px-6 py-3 rounded font-bold hover:bg-green-700 transition"
-                >
-                    {loading ? 'Searching...' : 'Search Hotels'}
-                </button>
+                        <div className="form-row">
+                            <div className="input-group">
+                                <label className="input-label">Check-in</label>
+                                <input
+                                    type="date"
+                                    className="input-field"
+                                    value={checkin}
+                                    onChange={(e) => setCheckin(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label className="input-label">Check-out</label>
+                                <input
+                                    type="date"
+                                    className="input-field"
+                                    value={checkout}
+                                    onChange={(e) => setCheckout(e.target.value)}
+                                    required
+                                />
+                            </div>
+
+                            <div className="input-group">
+                                <label className="input-label">Residency</label>
+                                <select
+                                    className="input-field"
+                                    value={residency}
+                                    onChange={(e) => setResidency(e.target.value)}
+                                >
+                                    <option value="us">United States</option>
+                                    <option value="gb">United Kingdom</option>
+                                    <option value="de">Germany</option>
+                                    <option value="fr">France</option>
+                                    <option value="cz">Czech Republic</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div className="rooms-section">
+                            <div className="rooms-header">
+                                <h3 className="section-title">Rooms & Guests</h3>
+                                <button
+                                    type="button"
+                                    className="btn-add-room"
+                                    onClick={addRoom}
+                                >
+                                    <span>+</span> Add Room
+                                </button>
+                            </div>
+
+                            <div className="rooms-grid">
+                                {rooms.map((room, index) => (
+                                    <div key={index} className="room-card glass-card">
+                                        <div className="room-header">
+                                            <span className="room-number">Room {index + 1}</span>
+                                            {rooms.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    className="btn-remove"
+                                                    onClick={() => removeRoom(index)}
+                                                >
+                                                    ×
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="room-inputs">
+                                            <div className="input-group">
+                                                <label className="input-label">Adults</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-field"
+                                                    min="1"
+                                                    max="10"
+                                                    value={room.adults}
+                                                    onChange={(e) => updateRoom(index, 'adults', e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="input-group">
+                                                <label className="input-label">Children</label>
+                                                <input
+                                                    type="number"
+                                                    className="input-field"
+                                                    min="0"
+                                                    max="10"
+                                                    value={room.children.length}
+                                                    onChange={(e) => updateRoom(index, 'children', Array(parseInt(e.target.value)).fill(10))}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="btn btn-primary btn-search"
+                            disabled={loading}
+                        >
+                            {loading ? (
+                                <>
+                                    <span className="spinner-small"></span>
+                                    Searching...
+                                </>
+                            ) : (
+                                <>
+                                    <span className="search-icon">🔍</span>
+                                    Search Hotels
+                                </>
+                            )}
+                        </button>
+                    </form>
+                </div>
             </div>
         </div>
     );
