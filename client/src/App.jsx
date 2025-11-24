@@ -8,7 +8,7 @@ function App() {
   return (
     <div className="container mx-auto min-h-screen bg-gray-50">
       <nav className="bg-blue-600 p-4 text-white mb-4">
-        <h1 className="text-xl font-bold">ETG Certification App</h1>
+        <h1 className="text-xl font-bold">Gaithtours</h1>
       </nav>
       <Routes>
         <Route path="/" element={<SearchPage />} />

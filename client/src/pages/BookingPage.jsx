@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createBooking, startBooking, checkBookingStatus } from '../api';
+import './BookingPage.css';
 
 const BookingPage = () => {
     const location = useLocation();
@@ -22,7 +23,12 @@ const BookingPage = () => {
     const [loading, setLoading] = useState(false);
     const [status, setStatus] = useState('');
 
-    if (!rate) return <div>Invalid booking session</div>;
+    if (!rate) return (
+        <div className="invalid-session">
+            <div className="invalid-icon">❌</div>
+            <div className="invalid-message">Invalid booking session</div>
+        </div>
+    );
 
     const handleGuestChange = (roomIndex, guestIndex, field, value) => {
         const newRooms = [...rooms];
@@ -121,74 +127,93 @@ const BookingPage = () => {
     };
 
     return (
-        <div className="p-4 max-w-2xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4">Complete Booking</h1>
-            <div className="mb-4 bg-gray-50 p-4 rounded border">
-                <h2 className="text-xl font-bold">{hotel.name}</h2>
-                <p className="text-gray-600">{rate.room_name}</p>
-                <p className="font-bold text-green-600 text-lg mt-2">
+        <div className="booking-page">
+            <div className="booking-header">
+                <h1 className="booking-title">Complete Your Booking</h1>
+                <p className="booking-subtitle">Just a few more details to confirm your stay</p>
+            </div>
+
+            <div className="hotel-summary">
+                <h2 className="hotel-summary-name">{hotel.name}</h2>
+                <p className="hotel-summary-room">{rate.room_name}</p>
+                <div className="hotel-summary-price">
                     {rate.payment_options.payment_types[0].show_amount} {rate.payment_options.payment_types[0].show_currency_code}
-                </p>
+                </div>
             </div>
 
-            <div className="space-y-6">
-                <div>
-                    <h3 className="text-lg font-semibold mb-2">Guest Details</h3>
-                    {rooms.map((room, roomIndex) => (
-                        <div key={roomIndex} className="mb-4 border p-4 rounded">
-                            <h4 className="font-medium mb-2 text-gray-700">Room {roomIndex + 1}</h4>
-                            {room.guests.map((guest, guestIndex) => (
-                                <div key={guestIndex} className="flex gap-2 mb-2">
-                                    <input
-                                        placeholder="First Name"
-                                        value={guest.first_name}
-                                        onChange={e => handleGuestChange(roomIndex, guestIndex, 'first_name', e.target.value)}
-                                        className="border p-2 w-full rounded"
-                                    />
-                                    <input
-                                        placeholder="Last Name"
-                                        value={guest.last_name}
-                                        onChange={e => handleGuestChange(roomIndex, guestIndex, 'last_name', e.target.value)}
-                                        className="border p-2 w-full rounded"
-                                    />
-                                </div>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-
-                <div className="border-t pt-4">
-                    <h3 className="text-lg font-semibold mb-2">Contact Info</h3>
-                    <div className="space-y-2">
-                        <input
-                            placeholder="Email"
-                            value={email}
-                            onChange={e => setEmail(e.target.value)}
-                            className="border p-2 block w-full rounded"
-                        />
-                        <input
-                            placeholder="Phone"
-                            value={phone}
-                            onChange={e => setPhone(e.target.value)}
-                            className="border p-2 block w-full rounded"
-                        />
+            <div className="form-section">
+                <h3 className="section-title">
+                    <span className="section-icon">👥</span>
+                    Guest Details
+                </h3>
+                {rooms.map((room, roomIndex) => (
+                    <div key={roomIndex} className="room-card">
+                        <h4 className="room-title">
+                            🛏️ Room {roomIndex + 1}
+                        </h4>
+                        {room.guests.map((guest, guestIndex) => (
+                            <div key={guestIndex} className="guest-inputs">
+                                <input
+                                    placeholder="First Name"
+                                    value={guest.first_name}
+                                    onChange={e => handleGuestChange(roomIndex, guestIndex, 'first_name', e.target.value)}
+                                    className="input-field"
+                                />
+                                <input
+                                    placeholder="Last Name"
+                                    value={guest.last_name}
+                                    onChange={e => handleGuestChange(roomIndex, guestIndex, 'last_name', e.target.value)}
+                                    className="input-field"
+                                />
+                            </div>
+                        ))}
                     </div>
-                </div>
-
-                <button
-                    onClick={handleBooking}
-                    disabled={loading}
-                    className="w-full bg-blue-600 text-white px-6 py-3 rounded font-bold hover:bg-blue-700 transition mt-4"
-                >
-                    {loading ? 'Processing...' : 'Confirm Booking'}
-                </button>
-
-                {status && (
-                    <div className={`mt-4 p-4 rounded ${status.includes('Confirmed') ? 'bg-green-100' : 'bg-gray-100'}`}>
-                        {status}
-                    </div>
-                )}
+                ))}
             </div>
+
+            <div className="form-section">
+                <h3 className="section-title">
+                    <span className="section-icon">📧</span>
+                    Contact Information
+                </h3>
+                <div className="contact-inputs">
+                    <input
+                        placeholder="Email Address"
+                        type="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                        className="input-field"
+                    />
+                    <input
+                        placeholder="Phone Number"
+                        type="tel"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        className="input-field"
+                    />
+                </div>
+            </div>
+
+            <button
+                onClick={handleBooking}
+                disabled={loading}
+                className="btn-submit"
+            >
+                {loading && <span className="spinner-inline"></span>}
+                {loading ? 'Processing...' : 'Confirm Booking'}
+            </button>
+
+            {status && (
+                <div className={`status-message ${
+                    status.includes('Confirmed') ? 'success' :
+                    status.includes('Error') ? 'error' : 'processing'
+                }`}>
+                    {status.includes('Confirmed') && '✅ '}
+                    {status.includes('Error') && '❌ '}
+                    {!status.includes('Confirmed') && !status.includes('Error') && '⏳ '}
+                    {status}
+                </div>
+            )}
         </div>
     );
 };

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { getHotelPage, prebook } from '../api';
+import './HotelPage.css';
 
 const HotelPage = () => {
     const { id } = useParams();
@@ -84,7 +85,10 @@ const HotelPage = () => {
         <div className="hotel-page">
             <div className="hotel-header">
                 <h1 className="hotel-title">{hotel.name}</h1>
-                <p className="hotel-address">{hotel.address}</p>
+                <p className="hotel-address">
+                    <span style={{fontSize: '1.25rem'}}>📍</span>
+                    {hotel.address}
+                </p>
             </div>
 
             <section className="rates-section">
